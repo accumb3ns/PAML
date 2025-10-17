@@ -356,10 +356,12 @@ class ArvadosPlatform(Platform):
                 ["owner_uuid", "=", project["uuid"]],
                 ["name", "=", collection_name]
                 ]).execute()
-            if len(search_result['items']) > 0:
-                collection = search_result['items'][0]
-            else:
-                raise ValueError(f"Collection {collection_name} not found in project {project['uuid']}")
+            if not search_result.get('items'):
+                raise ValueError(
+                    f"Collection {collection_name} not found in project {project['uuid']}"
+                )
+            # not possible to have multiple collections with same name
+            collection = search_result['items'][0]
 
         # Do we need to check for the file in the collection?
         # That could add a lot of overhead to query the collection for the file.
