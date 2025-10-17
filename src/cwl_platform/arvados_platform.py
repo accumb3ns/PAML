@@ -335,11 +335,11 @@ class ArvadosPlatform(Platform):
         :param file_path: The full path of the file to search for
         :return: The file id or None if not found
         '''
-        if file_path.startswith('http') or file_path.startswith('keep'):
+        if file_path.startswith('http'):
             return file_path
 
         # Get the collection
-        # file_path is assumed to a full path name, starting with a '/'.
+        # file_path may be either a keep collection UUID or a path within a project starting with /
         # the first folder in the path is the name of the collection.
         folder_tree = file_path.split('/')
         if not folder_tree[0]:
@@ -347,14 +347,19 @@ class ArvadosPlatform(Platform):
 
         # The first folder is the name of the collection.
         collection_name = folder_tree[0]
-        search_result = self.api.collections().list(filters=[
-            ["owner_uuid", "=", project["uuid"]],
-            ["name", "=", collection_name]
-            ]).execute()
-        if len(search_result['items']) > 0:
-            collection = search_result['items'][0]
+        if collection_name.starts_with('keep:'):
+            collection = self.api.collections().get(uuid=collection_name).execute()
+            if not collection:
+                raise ValueError(f"Collection {collection_name} not found.")
         else:
-            raise ValueError(f"Collection {collection_name} not found in project {project['uuid']}")
+            search_result = self.api.collections().list(filters=[
+                ["owner_uuid", "=", project["uuid"]],
+                ["name", "=", collection_name]
+                ]).execute()
+            if len(search_result['items']) > 0:
+                collection = search_result['items'][0]
+            else:
+                raise ValueError(f"Collection {collection_name} not found in project {project['uuid']}")
 
         # Do we need to check for the file in the collection?
         # That could add a lot of overhead to query the collection for the file.
