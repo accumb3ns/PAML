@@ -756,7 +756,10 @@ class ArvadosPlatform(Platform):
             if task_name:
                 filters.append(["name", '=', task_name])
 
-            container_requests = arvados.util.keyset_list_all(self.api.container_requests().list, filters=filters)
+            container_requests = arvados.util.keyset_list_all(
+                self.api.container_requests().list,
+                filters=filters
+                )
         else:
             # Use provided tasks
             container_requests = [task.container_request for task in tasks]
